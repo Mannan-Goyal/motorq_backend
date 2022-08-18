@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import Events from '../models/events';
 import verifyToken from '../middlewares/verifyToken';
 import { adminPassword, adminUsername, jwtSecret } from '../constants';
+import Participants, { IParticipant } from '../models/participants';
 
 const router = express.Router();
 
@@ -89,6 +90,24 @@ router.delete('/remove', verifyToken, async (req: Request, res: Response): Promi
   try {
     await Events.deleteOne({ _id: req.body.id });
     res.status(200).json({ msg: 'Event removed' });
+  } catch (e) {
+    res.status(500).json({ msg: `Error: ${e}` });
+  }
+});
+
+// VERIFY
+router.post('/verify', verifyToken, async (req: Request, res: Response): Promise<void> => {
+  const eventId = req.body.id;
+  const { uname } = req.body;
+  try {
+    const usr = <IParticipant> await Participants.findOne({ uname });
+    usr.events.forEach(async (eve) => {
+      const arr = eve.split('-');
+      if (eventId === arr[0]) {
+        await Participants.updateOne({ uname }, { $pull: { events: { $in: [eve] } } });
+      }
+    });
+    res.status(200).json({ msg: 'Event Attended, pass withdrawn' });
   } catch (e) {
     res.status(500).json({ msg: `Error: ${e}` });
   }
