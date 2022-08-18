@@ -8,6 +8,7 @@ import { jwtSecret } from '../constants';
 
 const router = express.Router();
 
+// gets all events whose start time is ahead of the current time
 router.get('/events', async (req: Request, res: Response): Promise<void> => {
   try {
     const date = new Date();
